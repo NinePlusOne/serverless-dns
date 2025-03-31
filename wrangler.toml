@@ -2,7 +2,7 @@ name = "serverless-dns"
 main = "./dist/worker.js"
 workers_dev = true
 # logpush job is setup to capture from envs ending: log, pro, or one
-logpush = false
+logpush = true
 # use node_compat or custom build
 # node_compat = true
 compatibility_date = "2023-03-21"
@@ -12,10 +12,10 @@ upload_source_maps = true
 
 # uncomment to enable analytics on serverless-dns
 # this binding is not inherited by other worker-envs
-#analytics_engine_datasets = [
-#    { binding = "METRICS", dataset = "SDNS_M0" },
-#    { binding = "BL_METRICS", dataset = "SDNS_BL0" }
-#]
+analytics_engine_datasets = [
+    { binding = "METRICS", dataset = "SDNS_M0" },
+    { binding = "BL_METRICS", dataset = "SDNS_BL0" }
+]
 
 [build]
 command = "npm run build"
@@ -88,3 +88,26 @@ CF_LOGPUSH_R2_PATH = "qlog/"
 # CF_API_TOKEN = ""
 # CF_LOGPUSH_R2_SECRET_KEY = ""
 # CF_LOGPUSH_R2_ACCESS_KEY = ""
+CF_ACCOUNT_ID=<hex-cloudflare-account-id>
+CF_API_KEY=<api-key-with-logs-edit-permission-at-account-level>
+R2_BUCKET=<r2-bucket-name>
+R2_ACCESS_KEY=<r2-access-key-for-the-bucket>
+R2_SECRET_KEY=<r2-secret-key-with-read-write-permissions>
+# optional, setup a filter such that only logs form this worker ends up being pushed; but if you
+# do not need a filter on Worker name (script-name), edit the "filter" field below accordingly.
+SCRIPT_NAME=<name-of-the-worker-as-in-wrangler-toml>
+# for more options, ref: developers.cloudflare.com/logs/get-started/api-configuration
+# Logpush API with cURL: developers.cloudflare.com/logs/tutorials/examples/example-logpush-curl
+# Available Logpull fields: developers.cloudflare.com/logs/reference/log-fields/account/workers_trace_events
+curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/logpush/jobs" \
+    -H "Authorization: Bearer ${CF_API_KEY}" \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "name": "dns-logpush",
+        "logpull_options": "fields=EventTimestampMs,Outcome,Logs,ScriptName&timestamps=rfc3339",
+        "destination_conf": "r2://'"$R2_BUCKET"'/{DATE}?access-key-id='"${R2_ACCESS_KEY}"'&secret-access-key='"${R2_SECRET_KEY}"'&account-id='"{$CF_ACCOUNT_ID}"',
+        "dataset": "workers_trace_events",
+        "filter": "{\"where\":{\"and\":[{\"key\":\"ScriptName\",\"operator\":\"contains\",\"value\":\"'"${SCRIPT_NAME}"'\"},{\"key\":\"Outcome\",\"operator\":\"eq\",\"value\":\"ok\"}]}}",
+        "enabled": true,
+        "frequency": "low"
+    }'
