@@ -26,29 +26,30 @@ on:
         default: 'main'
         required: true
 
-  push:
-    # TODO: inputs.environment and inputs.commit
-    branches:
-      - "main"
-    tags:
-      - "v*"
-    paths-ignore:
-      - ".github/**"
-      - "!.github/workflows/cf.yml"
-      - ".env.example"
-      - ".eslintrc.cjs"
-      - ".prettierignore"
-      - "fly.toml"
-      - "README.md"
-      - "node.Dockerfile"
-      - "deno.Dockerfile"
-      - "import_map.json"
-      - ".vscode/*"
-      - ".husky/*"
-      - ".prettierrc.json"
-      - "LICENSE"
-      - "run"
-  repository_dispatch:
+  # DISABLED: Managing Cloudflare deployment from dashboard instead of GitHub Actions
+  # push:
+  #   # TODO: inputs.environment and inputs.commit
+  #   branches:
+  #     - "main"
+  #   tags:
+  #     - "v*"
+  #   paths-ignore:
+  #     - ".github/**"
+  #     - "!.github/workflows/cf.yml"
+  #     - ".env.example"
+  #     - ".eslintrc.cjs"
+  #     - ".prettierignore"
+  #     - "fly.toml"
+  #     - "README.md"
+  #     - "node.Dockerfile"
+  #     - "deno.Dockerfile"
+  #     - "import_map.json"
+  #     - ".vscode/*"
+  #     - ".husky/*"
+  #     - ".prettierrc.json"
+  #     - "LICENSE"
+  #     - "run"
+  # repository_dispatch:
 
 env:
   GIT_REF: ${{ github.event.inputs.commit || github.ref }}
