@@ -63,8 +63,9 @@ mmdef=${mmdef#0}
 # defaults: stackoverflow.com/a/28085062
 : "${wk:=$wkdef}" "${mm:=$mmdef}" "${yyyy:=$yyyydef}"
 
-# wget opts: superuser.com/a/689340
-wgetopts="--tries=3 --retry-on-http-error=404 --waitretry=3 --no-dns-cache"
+# Use curl instead of wget for broader compatibility (Deno Deploy doesn't have wget)
+# curl opts: retry 3 times, fail silently on HTTP errors, follow redirects
+curlopts="--retry 3 --retry-delay 3 -fsSL"
 
 # stackoverflow.com/a/1445507
 max=4
@@ -79,7 +80,7 @@ do
         echo "=x== pre.sh: no op ${out}"
         exit 0
     else
-        wget $wgetopts -q "${burl}/${yyyy}/${dir}/${mm}-${wk}/${codec}/${f}" -O "${out}"
+        curl $curlopts "${burl}/${yyyy}/${dir}/${mm}-${wk}/${codec}/${f}" -o "${out}"
         wcode=$?
 
         if [ $wcode -eq 0 ]; then
@@ -90,7 +91,7 @@ do
                 fulltimestamp=$(cut -d"," -f8 "$out" | cut -d":" -f2 | tr -dc '0-9/')
             fi
             echo "==x= pre.sh: $i ok $wcode; filetag? ${fulltimestamp}"
-            wget $wgetopts -q "${burl}/${fulltimestamp}/${codec}/${f2}" -O "${out2}"
+            curl $curlopts "${burl}/${fulltimestamp}/${codec}/${f2}" -o "${out2}"
             wcode2=$?
             if [ $wcode2 -eq 0 ]; then
               echo "===x pre.sh: $i filetag ok $wcode2"
